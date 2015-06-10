@@ -5,5 +5,9 @@
 # but you can also edit it by hand.
 
 meteor-platform
-autopublish
-insecure
+meteorhacks:cluster
+simple:rest
+simple:json-routes
+jparker:crypto-core
+jparker:crypto-sha256
+jparker:crypto-hmac
