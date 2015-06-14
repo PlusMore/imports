@@ -11,3 +11,5 @@ simple:json-routes
 jparker:crypto-core
 jparker:crypto-sha256
 jparker:crypto-hmac
+peerlibrary:xml2js
+http
