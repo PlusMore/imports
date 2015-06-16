@@ -6,7 +6,7 @@ var mailgunAuth = function(api_key, token, timestamp, sig) {
 JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
   console.log('INCOMING EMAIL\n===========');
   console.log('From: '+req.body['From']);
-  console.log('Subject: '+req.body['subject']);
+  console.log('Subject: '+req.body['Subject']);
   console.log('Date: '+req.body['Date']);
 
   // for testing
@@ -14,7 +14,12 @@ JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
   if (mailgunAuth(Meteor.settings.mailgun.key, req.body.token, req.body.timestamp, req.body.signature)) {
 
     console.log('Mailgun Auth: true');
-    JsonRoutes.sendResult(res, 200, {});
+    JsonRoutes.sendResult(res, 200);
+
+    var emailDetails = {
+      from: req.body['Sender'],
+      date: new Date(req.body['Date'])
+    };
 
     if (req.body.attachments) {
       console.log('Attachments: true');
@@ -28,7 +33,13 @@ JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
           var resArr = fileJson.RES_DETAIL.LIST_G_GROUP_BY1.G_GROUP_BY1.LIST_G_RESERVATION.G_RESERVATION;
           if (resArr) {
             console.log('Reservations: ' + resArr.length);
-            //console.log(resArr);
+            Meteor.call('insertOracleArrivals', emailDetails, resArr, function(err, res) {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log("Inserted arrivals");
+              }
+            });
           } else {
             console.log('XML not in expected format');
           }
