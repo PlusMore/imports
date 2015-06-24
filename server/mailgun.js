@@ -17,7 +17,7 @@ JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
     JsonRoutes.sendResult(res, 200);
 
     var emailDetails = {
-      from: req.body['Sender'],
+      from: req.body['sender'],
       date: new Date(req.body['Date'])
     };
 
@@ -33,7 +33,7 @@ JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
           var resArr = fileJson.RES_DETAIL.LIST_G_GROUP_BY1.G_GROUP_BY1.LIST_G_RESERVATION.G_RESERVATION;
           if (resArr) {
             console.log('Reservations: ' + resArr.length);
-            Meteor.call('insertOracleArrivals', emailDetails, resArr, function(err, res) {
+            Meteor.call('insertOracleXMLArrivals', emailDetails, resArr, function(err, res) {
               if (err) {
                 console.log(err);
               } else {
