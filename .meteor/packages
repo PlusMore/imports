@@ -13,3 +13,4 @@ jparker:crypto-sha256
 jparker:crypto-hmac
 peerlibrary:xml2js
 http
+momentjs:moment

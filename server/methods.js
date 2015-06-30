@@ -2,17 +2,31 @@ Meteor.methods({
   'preregisterOracleXMLArrivals': function(importData, resArr) {
     check(importData, Object);
 
-    /*
-    return Stays.insert({
-      hotelId: hotelId,
-      importId: importArrivalId,
-      "preReg.guestLastName": '==LASTNAME==',
-      "preReg.startDate": '==STARTDATE==',
-      "preReg.endDate": '==ENDDATE==',
-      zone: '==DATE ZONE==',
-      active: false
+    var zone = moment().zone();
+
+    _.each(resArr, function(res) {
+      var year = parseInt('20' + res.ARRIVAL[6] + res.ARRIVAL[7]);
+      var month = parseInt(res.ARRIVAL[0]+res.ARRIVAL[1]);
+      var day = parseInt(res.ARRIVAL[0]+res.ARRIVAL[4]);
+      var startDate = new Date(year, month, day);
+
+      year = parseInt('20' + res.DEPARTURE[6] + res.DEPARTURE[7]);
+      month = parseInt(res.DEPARTURE[0]+res.DEPARTURE[1]);
+      day = parseInt(res.DEPARTURE[0]+res.DEPARTURE[4]);
+      var endDate = new Date(year, month, day);
+
+      var name = res.FULL_NAME.split(',');
+
+      Stays.insert({
+        hotelId: importData.hotelId,
+        "preReg.guestLastName": name[0],
+        "preReg.startDate": startDate,
+        "preReg.endDate": endDate,
+        zone: zone,
+        active: false
+      });
+
     });
-    */
   },
   'insertOracleXMLArrivals': function(emailDetails, resArr) {
     check(emailDetails, Object);
