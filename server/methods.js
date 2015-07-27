@@ -1,32 +1,50 @@
 Meteor.methods({
   'preregisterOracleXMLArrivals': function(importData, resArr) {
-    check(importData, Object);
-
-    var zone = moment().zone();
+    check(importData.hotelId, String);
+    var hotelId = importData.hotelId;
+    var staysToInsert = [];
 
     _.each(resArr, function(res) {
-      var year = parseInt('20' + res.ARRIVAL[6] + res.ARRIVAL[7]);
-      var month = parseInt(res.ARRIVAL[0]+res.ARRIVAL[1]);
-      var day = parseInt(res.ARRIVAL[0]+res.ARRIVAL[4]);
-      var startDate = new Date(year, month, day);
+      var startDateMoment = moment(res.ARRIVAL);
+      var startDate = startDateMoment.toDate();
 
-      year = parseInt('20' + res.DEPARTURE[6] + res.DEPARTURE[7]);
-      month = parseInt(res.DEPARTURE[0]+res.DEPARTURE[1]);
-      day = parseInt(res.DEPARTURE[0]+res.DEPARTURE[4]);
-      var endDate = new Date(year, month, day);
+      var endDateMoment = moment(res.DEPARTURE);
+      var endDate = endDateMoment.toDate();
 
       var name = res.FULL_NAME.split(',');
 
-      Stays.insert({
-        hotelId: importData.hotelId,
+      console.log('checking if stay already exists in system', name, hotelId);
+
+      var upcomingStay = Stays.findOne({
+        hotelId: hotelId,
+        "preReg.guestFirstName": name[1],
         "preReg.guestLastName": name[0],
         "preReg.startDate": startDate,
         "preReg.endDate": endDate,
-        zone: zone,
         active: false
       });
 
+      if (! upcomingStay) {
+        console.log('stay needs to be inserted', name, hotelId);
+
+        staysToInsert.push({
+          hotelId: hotelId,
+          guestFirstName: name[1],
+          guestLastName: name[0],
+          startDate: startDate,
+          endDate: endDate,
+          active: false
+        });
+      }
+
     });
+
+    // Other way had 100s of separate connections, more efficient to send all
+    // stays to be imported to hotel service
+    if (staysToInsert.length > 0) {
+      console.log('number of stays to be inserted:', staysToInsert.length);
+      HotelService.call('registerImportedStays', staysToInsert);
+    }
   },
   'insertOracleXMLArrivals': function(emailDetails, resArr) {
     check(emailDetails, Object);

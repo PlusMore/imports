@@ -1,5 +1,5 @@
 Stays = new Meteor.Collection('stays', {
-  connection: Cluster.discoverConnection('hotel')
+  connection: HotelService
 });
 
 // Allow/Deny

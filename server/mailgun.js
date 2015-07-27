@@ -1,7 +1,18 @@
 var mailgunAuth = function(api_key, token, timestamp, sig) {
   var msg = timestamp + token;
   return sig === CryptoJS.HmacSHA256(msg, api_key).toString();
-}
+};
+
+var processReservations = function(emailDetails, resArr) {
+  console.log('Number of reservations to process: ', resArr.length);
+  Meteor.call('insertOracleXMLArrivals', emailDetails, resArr, function(err, res) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Inserted arrivals");
+    }
+  });
+};
 
 JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
   console.log('INCOMING EMAIL\n===========');
@@ -28,21 +39,33 @@ JsonRoutes.add("post", "/arrivals/mailgun", function(req, res, next) {
       _.each(attachments, function(attachment) {
         if (attachment["content-type"] === "file/xml") {
           console.log('Found XML attachment: downloading...');
-          var file = HTTP.get(attachment.url, {auth: "api:"+Meteor.settings.mailgun.key});
-          var fileJson = xml2js.parseStringSync(file.content, {explicitArray: false});
-          var resArr = fileJson.RES_DETAIL.LIST_G_GROUP_BY1.G_GROUP_BY1.LIST_G_RESERVATION.G_RESERVATION;
-          if (resArr) {
-            console.log('Reservations: ' + resArr.length);
-            Meteor.call('insertOracleXMLArrivals', emailDetails, resArr, function(err, res) {
-              if (err) {
-                console.log(err);
-              } else {
-                console.log("Inserted arrivals");
-              }
+          var file = HTTP.get(attachment.url, {auth: "api:"+Meteor.settings.mailgun.key}),
+              fileJson,
+              reservationGroupsByDate;
+
+          console.log('Attempting to parse XML...');
+
+          try {
+            fileJson = xml2js.parseStringSync(file.content, {explicitArray: false});
+            reservationGroupsByDate = fileJson.RES_DETAIL.LIST_G_GROUP_BY1.G_GROUP_BY1;
+          } catch (e) {
+            console.log('Error parsing XML.');
+          }
+
+          console.log('Parsed XML Successfully. Attempting to process reservations...')
+          // sometimes it's an array, other times, it's just an object.
+          if (Array.isArray(reservationGroupsByDate)) {
+            console.log('Multiple Dates found.')
+            _.each(reservationGroupsByDate, function(dateGroup) {
+              console.log('Processing reservations for ', dateGroup.GROUPBY1_COL);
+              processReservations(emailDetails, dateGroup.LIST_G_RESERVATION.G_RESERVATION);
             });
           } else {
-            console.log('XML not in expected format');
+            console.log('Single Day import.')
+            console.log('Processing reservations for ', reservationGroupsByDate.GROUPBY1_COL);
+            processReservations(emailDetails, reservationGroupsByDate.LIST_G_RESERVATION.G_RESERVATION);
           }
+
         } else {
           console.log('Found non-XML attachment: ignoring...')
         }

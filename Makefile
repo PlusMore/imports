@@ -1,16 +1,31 @@
 NODE_ENV?=development
 NODE_OPTIONS?=''
 APP_ENV=development
-PORT?=3003
+PORT?=3100
 CLUSTER_DISCOVERY_URL?=mongodb://localhost:27017/cluster
 CLUSTER_SERVICE?=imports
 TAG?=
+SERVER=$(shell curl ipecho.net/plain)
 
 start:
 	NODE_OPTIONS=$(NODE_OPTIONS) \
 	CLUSTER_DISCOVERY_URL=$(CLUSTER_DISCOVERY_URL) \
 	CLUSTER_SERVICE=$(CLUSTER_SERVICE) \
 	meteor -p $(PORT) --settings ./config/$(APP_ENV)/settings.json
+
+start-public:
+	NODE_OPTIONS=$(NODE_OPTIONS) \
+	CLUSTER_DISCOVERY_URL=$(CLUSTER_DISCOVERY_URL) \
+	CLUSTER_SERVICE=$(CLUSTER_SERVICE) \
+	SERVER=$(SERVER) \
+	meteor -p $(PORT) --settings ./config/$(APP_ENV)/settings.json --mobile-server $(SERVER):$(PORT)
+
+debug-public:
+	NODE_OPTIONS='--debug' \
+	CLUSTER_DISCOVERY_URL=$(CLUSTER_DISCOVERY_URL) \
+	CLUSTER_SERVICE=$(CLUSTER_SERVICE) \
+	SERVER=$(SERVER) \
+	meteor debug -p $(PORT) --settings ./config/$(APP_ENV)/settings.json --mobile-server $(SERVER):$(PORT)
 
 debug:
 	NODE_OPTIONS='--debug' \
