@@ -1,1 +1,0 @@
-HotelService = Cluster.discoverConnection('hotel');
